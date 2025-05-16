@@ -2,11 +2,13 @@ package com.proyecto.microcuentas.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Column;
 import java.math.BigDecimal;
 
 @Entity
 public class Cuenta {
     @Id
+    @Column(name = "numero_cuenta")
     private String numeroCuenta;
     private String tipoCuenta;
     private BigDecimal saldoInicial;

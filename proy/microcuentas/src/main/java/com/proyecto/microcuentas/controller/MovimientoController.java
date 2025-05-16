@@ -5,6 +5,7 @@ import com.proyecto.microcuentas.dto.CuentaDTO;
 import com.proyecto.microcuentas.entity.Movimiento;
 import com.proyecto.microcuentas.entity.Cuenta;
 import com.proyecto.microcuentas.service.MovimientoService;
+import com.proyecto.microcuentas.repository.MovimientoRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,8 @@ public class MovimientoController {
     private MovimientoService service;
     @Autowired
     private ModelMapper mapper;
+    @Autowired
+    private MovimientoRepository movimientoRepository;
 
     @PostMapping
     public MovimientoDTO crear(@RequestBody MovimientoDTO dto) {
@@ -31,6 +34,27 @@ public class MovimientoController {
         return service.reportePorFecha(fecha).stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
+    }
+
+    @GetMapping
+    public List<Movimiento> listar() {
+        return movimientoRepository.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Movimiento obtener(@PathVariable Long id) {
+        return movimientoRepository.findById(id).orElseThrow();
+    }
+
+    @PutMapping("/{id}")
+    public Movimiento actualizar(@PathVariable Long id, @RequestBody Movimiento movimiento) {
+        movimiento.setId(id);
+        return movimientoRepository.save(movimiento);
+    }
+
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Long id) {
+        movimientoRepository.deleteById(id);
     }
 
     private MovimientoDTO toDTO(Movimiento m) {
