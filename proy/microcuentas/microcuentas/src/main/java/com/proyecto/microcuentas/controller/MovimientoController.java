@@ -1,75 +1,87 @@
 package com.proyecto.microcuentas.controller;
 
-import com.proyecto.microcuentas.dto.MovimientoDTO;
-import com.proyecto.microcuentas.dto.CuentaDTO;
-import com.proyecto.microcuentas.entity.Movimiento;
-import com.proyecto.microcuentas.entity.Cuenta;
-import com.proyecto.microcuentas.service.MovimientoService;
-import com.proyecto.microcuentas.repository.MovimientoRepository;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDate;
+
+import com.proyecto.microcuentas.dto.MovimientoDTO;
+import com.proyecto.microcuentas.entity.Movimiento;
+import com.proyecto.microcuentas.service.MovimientoService;
+import org.modelmapper.ModelMapper;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/movimientos")
 public class MovimientoController {
+    
     @Autowired
-    private MovimientoService service;
+    private MovimientoService movimientoService;
+    
     @Autowired
-    private ModelMapper mapper;
-    @Autowired
-    private MovimientoRepository movimientoRepository;
+    private ModelMapper modelMapper;
 
     @PostMapping
-    public MovimientoDTO crear(@RequestBody MovimientoDTO dto) {
-        Movimiento m = toEntity(dto);
-        return toDTO(service.crearMovimiento(m));
-    }
-
-    @GetMapping("/reportes")
-    public List<MovimientoDTO> reporte(@RequestParam LocalDate fecha) {
-        return service.reportePorFecha(fecha).stream()
-            .map(this::toDTO)
-            .collect(Collectors.toList());
-    }
-
-    @GetMapping
-    public List<Movimiento> listar() {
-        return movimientoRepository.findAll();
+    public ResponseEntity<?> crear(@RequestBody MovimientoDTO movimientoDTO) {
+        try {
+            Movimiento movimiento = modelMapper.map(movimientoDTO, Movimiento.class);
+            Movimiento movimientoCreado = movimientoService.crearMovimiento(movimiento);
+            return ResponseEntity.ok(modelMapper.map(movimientoCreado, MovimientoDTO.class));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al crear el movimiento: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
-    public Movimiento obtener(@PathVariable Long id) {
-        return movimientoRepository.findById(id).orElseThrow();
-    }
-
-    @PutMapping("/{id}")
-    public Movimiento actualizar(@PathVariable Long id, @RequestBody Movimiento movimiento) {
-        movimiento.setId(id);
-        return movimientoRepository.save(movimiento);
-    }
-
-    @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Long id) {
-        movimientoRepository.deleteById(id);
-    }
-
-    private MovimientoDTO toDTO(Movimiento m) {
-        MovimientoDTO dto = mapper.map(m, MovimientoDTO.class);
-        if (m.getCuenta() != null) {
-            dto.setCuenta(mapper.map(m.getCuenta(), CuentaDTO.class));
+    public ResponseEntity<?> obtener(@PathVariable Long id) {
+        try {
+            Movimiento movimiento = movimientoService.obtenerPorId(id);
+            return ResponseEntity.ok(modelMapper.map(movimiento, MovimientoDTO.class));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al obtener el movimiento: " + e.getMessage());
         }
-        return dto;
     }
 
-    private Movimiento toEntity(MovimientoDTO dto) {
-        Movimiento m = mapper.map(dto, Movimiento.class);
-        if (dto.getCuenta() != null) {
-            m.setCuenta(mapper.map(dto.getCuenta(), Cuenta.class));
+    @GetMapping
+    public ResponseEntity<?> listar() {
+        try {
+            List<Movimiento> movimientos = movimientoService.obtenerTodos();
+            List<MovimientoDTO> movimientosDTO = movimientos.stream()
+                .map(mov -> modelMapper.map(mov, MovimientoDTO.class))
+                .collect(Collectors.toList());
+            return ResponseEntity.ok(movimientosDTO);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al listar los movimientos: " + e.getMessage());
         }
-        return m;
+    }
+
+    @GetMapping("/cuenta/{numeroCuenta}")
+    public ResponseEntity<?> listarPorCuenta(@PathVariable String numeroCuenta) {
+        try {
+            List<Movimiento> movimientos = movimientoService.reportePorCliente(numeroCuenta);
+            List<MovimientoDTO> movimientosDTO = movimientos.stream()
+                .map(mov -> modelMapper.map(mov, MovimientoDTO.class))
+                .collect(Collectors.toList());
+            return ResponseEntity.ok(movimientosDTO);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al listar los movimientos de la cuenta: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/reporte")
+    public ResponseEntity<?> reportePorFecha(
+            @RequestParam LocalDateTime fechaInicio,
+            @RequestParam LocalDateTime fechaFin) {
+        try {
+            List<Movimiento> movimientos = movimientoService.reportePorFecha(fechaInicio, fechaFin);
+            List<MovimientoDTO> movimientosDTO = movimientos.stream()
+                .map(mov -> modelMapper.map(mov, MovimientoDTO.class))
+                .collect(Collectors.toList());
+            return ResponseEntity.ok(movimientosDTO);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al generar el reporte: " + e.getMessage());
+        }
     }
 } 

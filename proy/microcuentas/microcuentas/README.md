@@ -1,203 +1,487 @@
-# Microservicio: microcuentas
+# Microservicio de Cuentas
 
-Este microservicio gestiona las cuentas bancarias y los movimientos asociados.
+Este microservicio maneja la gestión de cuentas bancarias, movimientos y reportes financieros.
 
----
+## Requisitos Previos
 
-## Instrucciones para ejecutar y probar el microservicio
-
-### 1. Requisitos previos
 - Java 17 o superior
-- Maven (o usa el wrapper `mvnw.cmd`)
-- Docker (para la base de datos PostgreSQL)
+- Maven 3.6 o superior
+- PostgreSQL 12 o superior
+- Microservicio de Clientes corriendo en el puerto 8082
 
-### 2. Levantar la base de datos con Docker
-Ejecuta este comando para iniciar PostgreSQL:
+## Configuración del Entorno
+
+1. Clonar el repositorio
+2. Configurar la base de datos PostgreSQL:
+   ```sql
+   -- Crear la base de datos
+   CREATE DATABASE microcuentas;
+   
+   -- Conectar a la base de datos
+   \c microcuentas;
+   
+   -- Crear tabla de cuentas
+   CREATE TABLE IF NOT EXISTS cuenta (
+       numero_cuenta VARCHAR(20) PRIMARY KEY,
+       tipo_cuenta VARCHAR(20) NOT NULL,
+       saldo_inicial DECIMAL(19,2) NOT NULL DEFAULT 0.00,
+       estado VARCHAR(20) NOT NULL,
+       fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   );
+   
+   -- Crear tabla de movimientos
+   CREATE TABLE IF NOT EXISTS movimiento (
+       id BIGSERIAL PRIMARY KEY,
+       fecha TIMESTAMP NOT NULL,
+       tipo_movimiento VARCHAR(20) NOT NULL,
+       valor DECIMAL(19,2) NOT NULL,
+       saldo DECIMAL(19,2) NOT NULL,
+       numero_cuenta VARCHAR(20) NOT NULL,
+       FOREIGN KEY (numero_cuenta) REFERENCES cuenta(numero_cuenta)
+   );
+   
+   -- Crear índices para mejorar el rendimiento
+   CREATE INDEX idx_movimiento_fecha ON movimiento(fecha);
+   CREATE INDEX idx_movimiento_numero_cuenta ON movimiento(numero_cuenta);
+   
+   -- Crear vista para reportes
+   CREATE OR REPLACE VIEW vista_estado_cuenta AS
+   SELECT 
+       c.numero_cuenta,
+       c.tipo_cuenta,
+       c.saldo_inicial,
+       c.estado,
+       m.fecha,
+       m.tipo_movimiento,
+       m.valor,
+       m.saldo
+   FROM cuenta c
+   LEFT JOIN movimiento m ON c.numero_cuenta = m.numero_cuenta;
+   
+   -- Insertar datos de prueba
+   INSERT INTO cuenta (numero_cuenta, tipo_cuenta, saldo_inicial, estado)
+   VALUES 
+       ('1234567890', 'AHORROS', 1000.00, 'ACTIVA'),
+       ('0987654321', 'CORRIENTE', 2000.00, 'ACTIVA')
+   ON CONFLICT (numero_cuenta) DO NOTHING;
+   ```
+
+3. Configurar las credenciales en `application.properties`:
+   ```properties
+   spring.datasource.username=postgres
+   spring.datasource.password=admin123
+   ```
+
+
+## Endpoints Disponibles
+
+Base URL: `http://localhost:8081`
+
+### Cuentas (`/cuentas`)
+
+#### Listar todas las cuentas
 ```bash
-docker run --name basedb -e POSTGRES_PASSWORD=admin123 -p 5432:5432 -d postgres:latest
+GET http://localhost:8081/cuentas
+```
+Respuesta:
+```json
+[
+    {
+        "numeroCuenta": "1234567890",
+        "tipoCuenta": "AHORROS",
+        "saldoInicial": 1000.00,
+        "estado": "ACTIVA",
+        "fechaCreacion": "2024-03-20T10:00:00",
+        "fechaActualizacion": "2024-03-20T10:00:00"
+    },
+    {
+        "numeroCuenta": "0987654321",
+        "tipoCuenta": "CORRIENTE",
+        "saldoInicial": 2000.00,
+        "estado": "ACTIVA",
+        "fechaCreacion": "2024-03-20T10:00:00",
+        "fechaActualizacion": "2024-03-20T10:00:00"
+    }
+]
 ```
 
-### 3. Crear la base de datos
-Conéctate al contenedor y crea la base de datos:
+#### Obtener cuenta específica
 ```bash
-docker exec -it basedb psql -U postgres
-CREATE DATABASE microcuentasdb;
-\q
+GET http://localhost:8081/cuentas/1234567890
 ```
-
-### 4. Configura la conexión en `src/main/resources/application.properties`
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/microcuentasdb
-spring.datasource.username=postgres
-spring.datasource.password=admin123
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-```
-
-### 5. Compila y ejecuta el microservicio
-En Windows PowerShell:
-```powershell
-cd C:\Users\Usuario\Downloads\microcuentas\microcuentas
-.\mvnw.cmd clean install
-.\mvnw.cmd spring-boot:run
-```
-
-### 6. Probar los endpoints con Postman
-- El microservicio estará disponible en: `http://localhost:8080` (o el puerto configurado)
-- Usa los ejemplos de este README para probar los endpoints de cuentas y movimientos.
-
----
-
-## Endpoints principales y ejemplos de uso en Postman
-
-### Cuentas
-
-#### 1. Crear una cuenta (POST)
-- **URL:** `http://localhost:8080/cuentas`
-- **Body (raw, JSON):**
+Respuesta:
 ```json
 {
-  "numeroCuenta": "1002",
-  "tipoCuenta": "CORRIENTE",
-  "saldoInicial": 1000.0,
-  "estado": "ACTIVA"
+    "numeroCuenta": "1234567890",
+    "tipoCuenta": "AHORROS",
+    "saldoInicial": 1000.00,
+    "estado": "ACTIVA",
+    "fechaCreacion": "2024-03-20T10:00:00",
+    "fechaActualizacion": "2024-03-20T10:00:00"
 }
 ```
 
-#### 2. Listar todas las cuentas (GET)
-- **URL:** `http://localhost:8080/cuentas`
+#### Crear nueva cuenta
+```bash
+POST http://localhost:8081/cuentas
+Content-Type: application/json
 
-#### 3. Obtener una cuenta por número (GET)
-- **URL:** `http://localhost:8080/cuentas/1002`
-
-#### 4. Actualizar una cuenta (PUT)
-- **URL:** `http://localhost:8080/cuentas/1002`
-- **Body (raw, JSON):**
-```json
 {
-  "numeroCuenta": "1002",
-  "tipoCuenta": "CORRIENTE",
-  "saldoInicial": 1200.0,
-  "estado": "INACTIVA"
-}
-```
-
-#### 5. Eliminar una cuenta (DELETE)
-- **URL:** `http://localhost:8080/cuentas/1002`
-
----
-
-### Movimientos
-
-#### 1. Crear un movimiento (POST)
-- **URL:** `http://localhost:8080/movimientos`
-- **Body (raw, JSON):**
-```json
-{
-  "fecha": "2024-06-01",
-  "tipoMovimiento": "DEPOSITO",
-  "valor": 200.0,
-  "saldo": 1200.0,
-  "cuenta": {
-    "numeroCuenta": "1002",
-    "tipoCuenta": "CORRIENTE",
-    "saldoInicial": 1000.0,
+    "numeroCuenta": "9876543210",
+    "tipoCuenta": "AHORROS",
+    "saldoInicial": 500.00,
     "estado": "ACTIVA"
-  }
 }
 ```
-
-#### 2. Listar todos los movimientos (GET)
-- **URL:** `http://localhost:8080/movimientos`
-
-#### 3. Obtener un movimiento por ID (GET)
-- **URL:** `http://localhost:8080/movimientos/1`
-
-#### 4. Actualizar un movimiento (PUT)
-- **URL:** `http://localhost:8080/movimientos/1`
-- **Body (raw, JSON):**
+Respuesta:
 ```json
 {
-  "fecha": "2024-06-01",
-  "tipoMovimiento": "RETIRO",
-  "valor": 100.0,
-  "saldo": 1100.0,
-  "cuenta": {
-    "numeroCuenta": "1002",
-    "tipoCuenta": "CORRIENTE",
-    "saldoInicial": 1000.0,
-    "estado": "ACTIVA"
-  }
+    "numeroCuenta": "9876543210",
+    "tipoCuenta": "AHORROS",
+    "saldoInicial": 500.00,
+    "estado": "ACTIVA",
+    "fechaCreacion": "2024-03-20T10:00:00",
+    "fechaActualizacion": "2024-03-20T10:00:00"
 }
 ```
 
-#### 5. Eliminar un movimiento (DELETE)
-- **URL:** `http://localhost:8080/movimientos/1`
-
-#### 6. Reporte de movimientos por fecha (GET)
-- **URL:** `http://localhost:8080/movimientos/reportes?fecha=2024-06-01`
-- **Nota:** Actualmente este endpoint devuelve todos los movimientos. Puedes personalizar el filtrado por fecha en el repositorio si lo necesitas.
-
----
-
-## Notas y recomendaciones
-- **La base de datos debe estar creada y el contenedor Docker corriendo antes de iniciar el microservicio.**
-- Si cambias el nombre de la base de datos, usuario o contraseña, actualízalo también en `application.properties`.
-- Si tienes errores de conexión, revisa que el contenedor esté activo y el puerto 5432 no esté ocupado.
-- Puedes omitir los tests al compilar con: `-DskipTests`
-- Si necesitas limpiar la base, puedes borrar el contenedor y crearlo de nuevo:
-  ```bash
-  docker rm -f basedb
-  docker run --name basedb -e POSTGRES_PASSWORD=admin123 -p 5432:5432 -d postgres:latest
-  ```
-- Si recibes errores como "No static resource cuentas" o "No static resource movimientos", asegúrate de que los controladores y repositorios existen y están correctamente implementados.
-
----
-
-## Troubleshooting
-- **Error de conexión a la base de datos:** Verifica las credenciales y que el servicio de PostgreSQL esté activo.
-- **Puerto ocupado:** Cambia el puerto en `application.properties`.
-- **Problemas de CORS:** Configura los orígenes permitidos en tu aplicación Spring Boot.
-- **Error de relación entre entidades:** Asegúrate de que los nombres de columnas y las anotaciones `@JoinColumn` y `@Column` coinciden entre las entidades relacionadas.
-
----
-
-## Contacto y soporte
-Para dudas o soporte, contacta al equipo de desarrollo o abre un issue en el repositorio.
-
----
-
-## Estructura de entidades y relación (JPA)
-
-- **Cuenta**: entidad principal, numeroCuenta es la PK.
-- **Movimiento**: tiene una relación ManyToOne con Cuenta a través de la clave foránea `numeroCuenta`.
-
-Ejemplo de relación en la entidad Movimiento:
-```java
-@ManyToOne
-@JoinColumn(name = "numero_cuenta", referencedColumnName = "numero_cuenta")
-private Cuenta cuenta;
-```
-
----
-
-## Pruebas automáticas
-
-Puedes ejecutar las pruebas unitarias y de integración con:
+#### Actualizar cuenta
 ```bash
-mvn test
+PUT http://localhost:8081/cuentas/1234567890
+Content-Type: application/json
+
+{
+    "tipoCuenta": "CORRIENTE",
+    "saldoInicial": 1500.00,
+    "estado": "ACTIVA"
+}
+```
+Respuesta:
+```json
+{
+    "numeroCuenta": "1234567890",
+    "tipoCuenta": "CORRIENTE",
+    "saldoInicial": 1500.00,
+    "estado": "ACTIVA",
+    "fechaCreacion": "2024-03-20T10:00:00",
+    "fechaActualizacion": "2024-03-20T10:00:00"
+}
 ```
 
----
+#### Eliminar cuenta
+```bash
+DELETE http://localhost:8081/cuentas/1234567890
+```
+Respuesta:
+```json
+{
+    "mensaje": "Cuenta eliminada exitosamente"
+}
+```
 
-## Recomendaciones de seguridad
-- No expongas datos sensibles en producción.
-- Usa HTTPS en ambientes reales.
-- Limita el acceso a los endpoints sensibles.
-- Valida y sanitiza todos los datos recibidos.
+### Movimientos (`/movimientos`)
 
----
+#### Listar todos los movimientos
+```bash
+GET http://localhost:8081/movimientos
+```
+Respuesta:
+```json
+[
+    {
+        "id": 1,
+        "fecha": "2024-03-20T10:00:00",
+        "tipoMovimiento": "DEPOSITO",
+        "valor": 500.00,
+        "saldo": 1500.00,
+        "numeroCuenta": "1234567890",
+        "cliente": {
+            "id": 1,
+            "nombre": "Juan Pérez",
+            "identificacion": "1234567890"
+        }
+    },
+    {
+        "id": 2,
+        "fecha": "2024-03-20T11:00:00",
+        "tipoMovimiento": "RETIRO",
+        "valor": 200.00,
+        "saldo": 1300.00,
+        "numeroCuenta": "1234567890",
+        "cliente": {
+            "id": 1,
+            "nombre": "Juan Pérez",
+            "identificacion": "1234567890"
+        }
+    }
+]
+```
 
-## Cómo probar
+#### Obtener movimiento específico
+```bash
+GET http://localhost:8081/movimientos/1
+```
+Respuesta:
+```json
+{
+    "id": 1,
+    "fecha": "2024-03-20T10:00:00",
+    "tipoMovimiento": "DEPOSITO",
+    "valor": 500.00,
+    "saldo": 1500.00,
+    "numeroCuenta": "1234567890",
+    "cliente": {
+        "id": 1,
+        "nombre": "Juan Pérez",
+        "identificacion": "1234567890"
+    }
+}
+```
 
-Puedes usar [Postman](https://www.postman.com/) o `
+#### Registrar nuevo movimiento
+```bash
+POST http://localhost:8081/movimientos
+Content-Type: application/json
+
+{
+    "tipoMovimiento": "DEPOSITO",
+    "valor": 500.00,
+    "numeroCuenta": "1234567890",
+    "fecha": "2024-03-20T10:00:00"
+}
+```
+Respuesta:
+```json
+{
+    "id": 3,
+    "fecha": "2024-03-20T12:00:00",
+    "tipoMovimiento": "DEPOSITO",
+    "valor": 500.00,
+    "saldo": 1800.00,
+    "numeroCuenta": "1234567890",
+    "cliente": {
+        "id": 1,
+        "nombre": "Juan Pérez",
+        "identificacion": "1234567890",
+        "direccion": "Calle Principal 123",
+        "telefono": "555-0123",
+        "estado": true
+    }
+}
+```
+
+#### Actualizar movimiento
+```bash
+PUT http://localhost:8081/movimientos/1
+Content-Type: application/json
+
+{
+    "tipoMovimiento": "DEPOSITO",
+    "valor": 1000.00,
+    "numeroCuenta": "1234567890"
+}
+```
+Respuesta:
+```json
+{
+    "id": 1,
+    "fecha": "2024-03-20T10:00:00",
+    "tipoMovimiento": "DEPOSITO",
+    "valor": 1000.00,
+    "saldo": 2000.00,
+    "numeroCuenta": "1234567890",
+    "cliente": {
+        "id": 1,
+        "nombre": "Juan Pérez",
+        "identificacion": "1234567890"
+    }
+}
+```
+
+#### Eliminar movimiento
+```bash
+DELETE http://localhost:8081/movimientos/1
+```
+Respuesta:
+```json
+{
+    "mensaje": "Movimiento eliminado exitosamente"
+}
+```
+
+### Reportes (`/reportes`)
+
+#### Estado de cuenta
+```bash
+GET http://localhost:8081/reportes/estado-cuenta/1234567890
+```
+Respuesta:
+```json
+{
+    "cuenta": {
+        "numeroCuenta": "1234567890",
+        "tipoCuenta": "AHORROS",
+        "saldoInicial": 1000.00,
+        "estado": "ACTIVA",
+        "fechaCreacion": "2024-03-20T10:00:00",
+        "fechaActualizacion": "2024-03-20T10:00:00"
+    },
+    "cliente": {
+        "id": 1,
+        "nombre": "Juan Pérez",
+        "identificacion": "1234567890",
+        "direccion": "Calle Principal 123",
+        "telefono": "555-0123",
+        "estado": true
+    },
+    "movimientos": [
+        {
+            "id": 1,
+            "fecha": "2024-03-20T10:00:00",
+            "tipoMovimiento": "DEPOSITO",
+            "valor": 500.00,
+            "saldo": 1500.00
+        },
+        {
+            "id": 2,
+            "fecha": "2024-03-20T11:00:00",
+            "tipoMovimiento": "RETIRO",
+            "valor": 200.00,
+            "saldo": 1300.00
+        }
+    ]
+}
+```
+
+#### Reporte de movimientos por fecha
+```bash
+GET http://localhost:8081/reportes/movimientos?fechaInicio=2024-03-01T00:00:00&fechaFin=2024-03-31T23:59:59
+```
+Respuesta:
+```json
+[
+    {
+        "id": 1,
+        "fecha": "2024-03-20T10:00:00",
+        "tipoMovimiento": "DEPOSITO",
+        "valor": 500.00,
+        "saldo": 1500.00,
+        "numeroCuenta": "1234567890",
+        "cliente": {
+            "id": 1,
+            "nombre": "Juan Pérez",
+            "identificacion": "1234567890",
+            "direccion": "Calle Principal 123",
+            "telefono": "555-0123",
+            "estado": true
+        }
+    },
+    {
+        "id": 2,
+        "fecha": "2024-03-20T11:00:00",
+        "tipoMovimiento": "RETIRO",
+        "valor": 200.00,
+        "saldo": 1300.00,
+        "numeroCuenta": "1234567890",
+        "cliente": {
+            "id": 1,
+            "nombre": "Juan Pérez",
+            "identificacion": "1234567890",
+            "direccion": "Calle Principal 123",
+            "telefono": "555-0123",
+            "estado": true
+        }
+    }
+]
+```
+
+### Respuestas de Error
+
+#### Error de Validación
+```json
+{
+    "error": "Error de Validación",
+    "mensaje": "El saldo inicial no puede ser negativo"
+}
+```
+
+#### Error de Saldo Insuficiente
+```json
+{
+    "error": "Saldo Insuficiente",
+    "mensaje": "No hay fondos suficientes para realizar la operación"
+}
+```
+
+#### Error de Recurso No Encontrado
+```json
+{
+    "error": "Recurso No Encontrado",
+    "mensaje": "La cuenta con número 1234567890 no existe"
+}
+```
+
+#### Error del Sistema
+```json
+{
+    "error": "Error del Sistema",
+    "mensaje": "Ha ocurrido un error inesperado"
+}
+```
+
+## Integración con Microservicio de Clientes
+
+El microservicio se integra con el microservicio de clientes mediante Feign Client:
+
+- `ClienteClient`: Interface para comunicación con el microservicio de clientes
+- Endpoints disponibles:
+  - `GET http://localhost:8082/clientes/{id}`: Obtiene información de un cliente por ID
+  - `GET http://localhost:8082/clientes/cuenta/{numeroCuenta}`: Obtiene información de un cliente por número de cuenta
+
+## Manejo de Errores
+
+El microservicio implementa un manejo global de excepciones:
+
+- `SaldoInsuficienteException`: Para operaciones que exceden el saldo disponible
+- `IllegalArgumentException`: Para validaciones de datos
+- `GlobalExceptionHandler`: Maneja todas las excepciones y retorna respuestas HTTP apropiadas
+
+## Configuración de Caché
+
+Se implementa caché con Caffeine para mejorar el rendimiento:
+- Tamaño máximo: 500 elementos
+- Tiempo de expiración: 600 segundos
+
+## Compilación y Ejecución
+
+1. Compilar el proyecto:
+   ```bash
+   mvn clean install
+   ```
+
+2. Ejecutar el microservicio:
+   ```bash
+   mvn spring-boot:run
+   ```
+
+El microservicio estará disponible en `http://localhost:8081/api`
+
+## Notas Importantes
+
+- Todas las operaciones de movimiento validan el saldo disponible
+- Los reportes incluyen información del cliente obtenida del microservicio de clientes
+- Se implementa validación de fechas en los reportes
+- El microservicio maneja automáticamente las transacciones y el rollback en caso de error
+
+## Contribución
+
+1. Fork el repositorio
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles. 
