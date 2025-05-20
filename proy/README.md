@@ -17,7 +17,7 @@ Este microservicio gestiona la información de personas y clientes.
 1.  **Base de Datos:**
     -   Crea una base de datos en PostgreSQL (por ejemplo, `microclientesdb`).
     -   Ejecuta el script SQL para crear las tablas:
-        ```sql
+```sql
 CREATE TABLE persona (
     identificacion VARCHAR(20) PRIMARY KEY,
     nombre VARCHAR(100),
@@ -34,7 +34,7 @@ CREATE TABLE cliente (
     identificacion VARCHAR(20),
     CONSTRAINT fk_cliente_persona FOREIGN KEY (identificacion) REFERENCES persona(identificacion)
 );
-        ```
+```
     -   Configura la conexión en `microclientes/microclientes/src/main/resources/application.properties`.
 
 2.  **Compilación y Ejecución:**
@@ -53,7 +53,7 @@ CREATE TABLE cliente (
         -   **URL:** `http://localhost:8080/personas`
         -   **Body:** `raw`, `JSON`
 
-        ```json
+```json
 {
   "identificacion": "1001",
   "nombre": "Carlos Gomez",
@@ -62,7 +62,7 @@ CREATE TABLE cliente (
   "direccion": "Av. Siempre Viva 742",
   "telefono": "555-9876"
 }
-        ```
+```
     -   `GET /personas`: Listar todas las personas
         -   **Método:** `GET`
         -   **URL:** `http://localhost:8080/personas`
@@ -74,7 +74,7 @@ CREATE TABLE cliente (
         -   **URL:** `http://localhost:8080/personas/{identificacion}` (reemplazar {identificacion})
         -   **Body:** `raw`, `JSON`
 
-        ```json
+```json
 {
   "identificacion": "1001",
   "nombre": "Carlos Gomez",
@@ -83,7 +83,7 @@ CREATE TABLE cliente (
   "direccion": "Av. Siempre Viva 742",
   "telefono": "555-9876"
 }
-        ```
+```
     -   `DELETE /personas/{identificacion}`: Eliminar persona
         -   **Método:** `DELETE`
         -   **URL:** `http://localhost:8080/personas/{identificacion}` (reemplazar {identificacion})
@@ -94,14 +94,14 @@ CREATE TABLE cliente (
         -   **URL:** `http://localhost:8080/clientes`
         -   **Body:** `raw`, `JSON`
 
-        ```json
+```json
 {
   "clienteid": "cli_carlos",
   "contrasena": "clave123",
   "estado": "ACTIVO",
   "identificacion": "1001" 
 }
-        ```
+```
     -   `GET /clientes`: Listar todos los clientes
         -   **Método:** `GET`
         -   **URL:** `http://localhost:8080/clientes`
@@ -113,14 +113,14 @@ CREATE TABLE cliente (
         -   **URL:** `http://localhost:8080/clientes/{clienteid}` (reemplazar {clienteid})
         -   **Body:** `raw`, `JSON`
 
-        ```json
+```json
 {
   "clienteid": "cli_carlos",
   "contrasena": "clave456",
   "estado": "INACTIVO",
   "identificacion": "1001" 
 }
-        ```
+```
     -   `DELETE /clientes/{clienteid}`: Eliminar cliente
         -   **Método:** `DELETE`
         -   **URL:** `http://localhost:8080/clientes/{clienteid}` (reemplazar {clienteid})
@@ -141,7 +141,7 @@ Este microservicio maneja la gestión de cuentas bancarias, movimientos y report
 1.  **Base de Datos:**
     -   Crea una base de datos en PostgreSQL (por ejemplo, `microcuentasdb`).
     -   Ejecuta el script SQL para crear las tablas, índices y vista (ubicado en `microcuentas/microcuentas/src/main/resources/schema.sql`):
-        ```sql
+```sql
 -- Crear tabla de cuentas
 CREATE TABLE IF NOT EXISTS cuenta (
     numero_cuenta VARCHAR(20) PRIMARY KEY,
@@ -180,7 +180,7 @@ SELECT
     m.saldo
 FROM cuenta c
 LEFT JOIN movimiento m ON c.numero_cuenta = m.numero_cuenta;
-        ```
+```
     -   Configura la conexión en `microcuentas/microcuentas/src/main/resources/application.properties`.
     -   Asegúrate de que `spring.jpa.hibernate.ddl-auto` esté configurado como `create` o que las tablas existan antes de ejecutar.
 
@@ -206,7 +206,7 @@ LEFT JOIN movimiento m ON c.numero_cuenta = m.numero_cuenta;
         -   **URL:** `http://localhost:8081/cuentas`
         -   **Body:** `raw`, `JSON`
 
-        ```json
+```json
 {
     "numeroCuenta": "1001001001",
     "tipoCuenta": "AHORROS",
@@ -214,19 +214,19 @@ LEFT JOIN movimiento m ON c.numero_cuenta = m.numero_cuenta;
     "estado": "ACTIVA",
     "clienteId": "cli_carlos" 
 }
-        ```
+```
     -   `PUT /cuentas/{numeroCuenta}`: Actualizar cuenta
         -   **Método:** `PUT`
         -   **URL:** `http://localhost:8081/cuentas/{numeroCuenta}` (reemplazar {numeroCuenta})
         -   **Body:** `raw`, `JSON`
 
-        ```json
+```json
 {
     "tipoCuenta": "CORRIENTE",
     "saldoInicial": 600.00,
     "estado": "ACTIVA"
 }
-        ```
+```
     -   `DELETE /cuentas/{numeroCuenta}`: Eliminar cuenta
         -   **Método:** `DELETE`
         -   **URL:** `http://localhost:8081/cuentas/{numeroCuenta}` (reemplazar {numeroCuenta})
@@ -243,14 +243,14 @@ LEFT JOIN movimiento m ON c.numero_cuenta = m.numero_cuenta;
         -   **URL:** `http://localhost:8081/movimientos`
         -   **Body:** `raw`, `JSON`
 
-        ```json
+```json
 {
     "tipoMovimiento": "DEPOSITO",
     "valor": 100.00,
     "numeroCuenta": "1001001001",
     "fecha": "2024-05-20T10:30:00" 
 }
-        ```
+```
     -   `GET /movimientos/cuenta/{numeroCuenta}`: Listar movimientos por cuenta
         -   **Método:** `GET`
         -   **URL:** `http://localhost:8081/movimientos/cuenta/{numeroCuenta}` (reemplazar {numeroCuenta})
@@ -278,7 +278,7 @@ Necesitamos una persona para asociarla a un cliente.
 -   **URL:** `http://localhost:8080/personas`
 -   **Body:** `raw`, `JSON`
 
-    ```json
+```json
 {
   "identificacion": "1001",
   "nombre": "Carlos Gomez",
@@ -287,7 +287,7 @@ Necesitamos una persona para asociarla a un cliente.
   "direccion": "Av. Siempre Viva 742",
   "telefono": "555-9876"
 }
-    ```
+```
 
 *   **Verificación (Opcional):** Listar personas.
     -   **Método:** `GET`
@@ -301,14 +301,14 @@ Creamos un cliente asociado a la persona creada en el Paso 1.
 -   **URL:** `http://localhost:8080/clientes`
 -   **Body:** `raw`, `JSON`
 
-    ```json
+```json
 {
   "clienteid": "cli_carlos",
   "contrasena": "clave123",
   "estado": "ACTIVO",
   "identificacion": "1001" 
 }
-    ```
+```
 *   **Verificación (Opcional):** Listar clientes.
     -   **Método:** `GET`
     -   **URL:** `http://localhost:8080/clientes`
@@ -321,7 +321,7 @@ Creamos una cuenta bancaria. **Importante:** Esta cuenta debe ser asociada a un 
 -   **URL:** `http://localhost:8081/cuentas`
 -   **Body:** `raw`, `JSON`
 
-    ```json
+```json
 {
     "numeroCuenta": "1001001001",
     "tipoCuenta": "AHORROS",
@@ -329,7 +329,7 @@ Creamos una cuenta bancaria. **Importante:** Esta cuenta debe ser asociada a un 
     "estado": "ACTIVA",
     "clienteId": "cli_carlos" 
 }
-    ```
+```
 *   **Verificación (Opcional):** Listar cuentas.
     -   **Método:** `GET`
     -   **URL:** `http://localhost:8081/cuentas`
@@ -342,14 +342,14 @@ Realizamos un depósito en la cuenta creada en el Paso 3.
 -   **URL:** `http://localhost:8081/movimientos`
 -   **Body:** `raw`, `JSON`
 
-    ```json
+```json
 {
     "tipoMovimiento": "DEPOSITO",
     "valor": 100.00,
     "numeroCuenta": "1001001001",
     "fecha": "2024-05-20T10:30:00" 
 }
-    ```
+```
 *   **Nota:** Puedes ajustar la fecha y hora según sea necesario.
 
 *   **Verificación (Opcional):** Listar movimientos.
@@ -455,25 +455,73 @@ Aquí se describen los formatos JSON de las respuestas exitosas para algunas ope
 
 ## Manejo de Errores
 
-[... contenido existente sobre manejo de errores ...]
+El sistema maneja diversas excepciones y devuelve respuestas con formatos de error consistentes.
+
+-   `SaldoInsuficienteException`: Para operaciones que intentan retirar más fondos de los disponibles.
+-   `IllegalArgumentException`: Para errores de validación de datos de entrada.
+-   Otros errores del sistema: Capturados por el `GlobalExceptionHandler`.
 
 ## Validaciones
 
-[... contenido existente sobre validaciones ...]
+El microservicio de cuentas realiza validaciones a nivel de aplicación para:
+
+### Cuentas
+- Número de cuenta es un campo requerido.
+- Tipo de cuenta debe ser 'AHORROS' o 'CORRIENTE'.
+- Saldo inicial no puede ser negativo.
+- Estado debe ser 'ACTIVA' o 'INACTIVA'.
+
+### Movimientos
+- La cuenta asociada debe existir y estar activa.
+- El valor del movimiento no puede ser nulo.
+- Para retiros, se valida que el saldo resultante no sea negativo (`SaldoInsuficienteException`).
+- El tipo de movimiento es requerido.
+- La fecha del movimiento es requerida.
 
 ## Compilación y Ejecución
 
-[... contenido existente sobre compilación y ejecución ...]
+1.  Clona el repositorio.
+2.  Navega a la raíz del proyecto en tu terminal.
+3.  Compila ambos microservicios:
+    ```bash
+    cd microclientes/microclientes
+    mvn clean install
+    cd ../../microcuentas/microcuentas
+    mvn clean install
+    cd ../../..
+    ```
+4.  Ejecuta el microservicio de `microclientes`:
+    ```bash
+    cd microclientes/microclientes
+    mvn spring-boot:run
+    ```
+5.  Abre otra terminal, navega a la raíz del proyecto y ejecuta el microservicio de `microcuentas`:
+    ```bash
+    cd microcuentas/microcuentas
+    mvn spring-boot:run
+    ```
+
+Ambos microservicios estarán corriendo en `http://localhost:8080` y `http://localhost:8081` respectivamente.
 
 ## Notas Importantes
 
-[... contenido existente sobre notas importantes ...]
+-   Asegúrate de tener PostgreSQL instalado y ejecutándose.
+-   Las credenciales de la base de datos y los puertos están configurados en los archivos `application.properties` de cada microservicio.
+-   El microservicio de `microcuentas` utiliza Feign Client para comunicarse con `microclientes`.
+-   Las validaciones se realizan a nivel de aplicación.
+-   El saldo de la cuenta se actualiza automáticamente al registrar movimientos.
 
 ## Contribución
 
-[... contenido existente sobre contribución ...]
+Si deseas contribuir a este proyecto, por favor, sigue estos pasos:
+
+1.  Haz un fork del repositorio.
+2.  Crea una nueva rama para tu funcionalidad (`git checkout -b feature/nombre-funcionalidad`).
+3.  Realiza tus cambios y haz commits (`git commit -m 'feat: agrega nueva funcionalidad'`).
+4.  Envía tus cambios a tu fork (`git push origin feature/nombre-funcionalidad`).
+5.  Abre un Pull Request en el repositorio original.
 
 ## Licencia
 
-[... contenido existente sobre licencia ...]
+Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` en cada subdirectorio del microservicio para más detalles.
 
