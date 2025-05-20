@@ -6,6 +6,11 @@ Este proyecto consta de dos microservicios: `microclientes` (gestión de persona
 
 Este microservicio gestiona la información de personas y clientes.
 
+### Requisitos Previos
+
+- Java 17 o superior
+- Maven
+- PostgreSQL 12 o superior
 
 ### Configuración y Ejecución
 
@@ -46,7 +51,18 @@ CREATE TABLE cliente (
     -   `POST /personas`: Crear persona
         -   **Método:** `POST`
         -   **URL:** `http://localhost:8080/personas`
-        -   **Body:** `raw`, `JSON` (incluir campos: identificacion, nombre, genero, edad, direccion, telefono)
+        -   **Body:** `raw`, `JSON`
+
+        ```json
+{
+  "identificacion": "1001",
+  "nombre": "Carlos Gomez",
+  "genero": "M",
+  "edad": 35,
+  "direccion": "Av. Siempre Viva 742",
+  "telefono": "555-9876"
+}
+        ```
     -   `GET /personas`: Listar todas las personas
         -   **Método:** `GET`
         -   **URL:** `http://localhost:8080/personas`
@@ -56,7 +72,18 @@ CREATE TABLE cliente (
     -   `PUT /personas/{identificacion}`: Actualizar persona
         -   **Método:** `PUT`
         -   **URL:** `http://localhost:8080/personas/{identificacion}` (reemplazar {identificacion})
-        -   **Body:** `raw`, `JSON` (incluir campos: identificacion, nombre, genero, edad, direccion, telefono)
+        -   **Body:** `raw`, `JSON`
+
+        ```json
+{
+  "identificacion": "1001",
+  "nombre": "Carlos Gomez",
+  "genero": "M",
+  "edad": 36,
+  "direccion": "Av. Siempre Viva 742",
+  "telefono": "555-9876"
+}
+        ```
     -   `DELETE /personas/{identificacion}`: Eliminar persona
         -   **Método:** `DELETE`
         -   **URL:** `http://localhost:8080/personas/{identificacion}` (reemplazar {identificacion})
@@ -65,7 +92,16 @@ CREATE TABLE cliente (
     -   `POST /clientes`: Crear cliente (requiere que la Persona asociada exista)
         -   **Método:** `POST`
         -   **URL:** `http://localhost:8080/clientes`
-        -   **Body:** `raw`, `JSON` (incluir campos: clienteid, contrasena, estado, identificacion de la persona en un objeto `persona`)
+        -   **Body:** `raw`, `JSON`
+
+        ```json
+{
+  "clienteid": "cli_carlos",
+  "contrasena": "clave123",
+  "estado": "ACTIVO",
+  "identificacion": "1001" 
+}
+        ```
     -   `GET /clientes`: Listar todos los clientes
         -   **Método:** `GET`
         -   **URL:** `http://localhost:8080/clientes`
@@ -75,14 +111,30 @@ CREATE TABLE cliente (
     -   `PUT /clientes/{clienteid}`: Actualizar cliente
         -   **Método:** `PUT`
         -   **URL:** `http://localhost:8080/clientes/{clienteid}` (reemplazar {clienteid})
-        -   **Body:** `raw`, `JSON` (incluir campos del cliente y la persona asociada)
+        -   **Body:** `raw`, `JSON`
+
+        ```json
+{
+  "clienteid": "cli_carlos",
+  "contrasena": "clave456",
+  "estado": "INACTIVO",
+  "identificacion": "1001" 
+}
+        ```
     -   `DELETE /clientes/{clienteid}`: Eliminar cliente
         -   **Método:** `DELETE`
         -   **URL:** `http://localhost:8080/clientes/{clienteid}` (reemplazar {clienteid})
 
 ## Microservicio: microcuentas
 
-Este microservicio maneja la gestión de cuentas bancarias, movimientos y reportes financieros
+Este microservicio maneja la gestión de cuentas bancarias, movimientos y reportes financieros.
+
+### Requisitos Previos
+
+- Java 17 o superior
+- Maven
+- PostgreSQL 12 o superior
+- **Microservicio de Clientes corriendo** (en `http://localhost:8080`)
 
 ### Configuración y Ejecución
 
@@ -152,11 +204,29 @@ LEFT JOIN movimiento m ON c.numero_cuenta = m.numero_cuenta;
     -   `POST /cuentas`: Crear nueva cuenta
         -   **Método:** `POST`
         -   **URL:** `http://localhost:8081/cuentas`
-        -   **Body:** `raw`, `JSON` (incluir campos: numeroCuenta, tipoCuenta, saldoInicial, estado, clienteId)
+        -   **Body:** `raw`, `JSON`
+
+        ```json
+{
+    "numeroCuenta": "1001001001",
+    "tipoCuenta": "AHORROS",
+    "saldoInicial": 500.00,
+    "estado": "ACTIVA",
+    "clienteId": "cli_carlos" 
+}
+        ```
     -   `PUT /cuentas/{numeroCuenta}`: Actualizar cuenta
         -   **Método:** `PUT`
         -   **URL:** `http://localhost:8081/cuentas/{numeroCuenta}` (reemplazar {numeroCuenta})
-        -   **Body:** `raw`, `JSON` (incluir campos: tipoCuenta, saldoInicial, estado)
+        -   **Body:** `raw`, `JSON`
+
+        ```json
+{
+    "tipoCuenta": "CORRIENTE",
+    "saldoInicial": 600.00,
+    "estado": "ACTIVA"
+}
+        ```
     -   `DELETE /cuentas/{numeroCuenta}`: Eliminar cuenta
         -   **Método:** `DELETE`
         -   **URL:** `http://localhost:8081/cuentas/{numeroCuenta}` (reemplazar {numeroCuenta})
@@ -171,7 +241,16 @@ LEFT JOIN movimiento m ON c.numero_cuenta = m.numero_cuenta;
     -   `POST /movimientos`: Registrar nuevo movimiento
         -   **Método:** `POST`
         -   **URL:** `http://localhost:8081/movimientos`
-        -   **Body:** `raw`, `JSON` (incluir campos: tipoMovimiento, valor, numeroCuenta, fecha)
+        -   **Body:** `raw`, `JSON`
+
+        ```json
+{
+    "tipoMovimiento": "DEPOSITO",
+    "valor": 100.00,
+    "numeroCuenta": "1001001001",
+    "fecha": "2024-05-20T10:30:00" 
+}
+        ```
     -   `GET /movimientos/cuenta/{numeroCuenta}`: Listar movimientos por cuenta
         -   **Método:** `GET`
         -   **URL:** `http://localhost:8081/movimientos/cuenta/{numeroCuenta}` (reemplazar {numeroCuenta})
@@ -296,4 +375,105 @@ Genera un reporte de movimientos en un rango de fechas específico.
 *   **Nota:** Ajusta las fechas según sea necesario en la pestaña 'Params' de Postman.
 
 ---
+
+## Formatos de Respuesta
+
+Aquí se describen los formatos JSON de las respuestas exitosas para algunas operaciones clave.
+
+### Cuenta (Ejemplo de GET /cuentas/{numeroCuenta})
+```json
+{
+    "numeroCuenta": "1001001001",
+    "tipoCuenta": "AHORROS",
+    "saldoInicial": 500.00,
+    "estado": "ACTIVA",
+    "fechaCreacion": "2024-05-20T10:00:00",
+    "fechaActualizacion": "2024-05-20T10:00:00"
+}
+```
+
+### Movimiento (Ejemplo de GET /movimientos/{id})
+```json
+{
+    "id": 1,
+    "fecha": "2024-05-20T10:30:00",
+    "tipoMovimiento": "DEPOSITO",
+    "valor": 100.00,
+    "saldo": 600.00,
+    "numeroCuenta": "1001001001",
+    "cliente": {
+        "id": "cli_carlos",
+        "nombre": "Carlos Gomez",
+        "identificacion": "1001",
+        "direccion": "Av. Siempre Viva 742",
+        "telefono": "555-9876",
+        "estado": "ACTIVO"
+    }
+}
+```
+
+### Estado de Cuenta (Ejemplo de GET /reportes/estado-cuenta/{numeroCuenta})
+```json
+{
+    "cuenta": {
+        "numeroCuenta": "1001001001",
+        "tipoCuenta": "AHORROS",
+        "saldoInicial": 500.00,
+        "estado": "ACTIVA",
+        "fechaCreacion": "2024-05-20T10:00:00",
+        "fechaActualizacion": "2024-05-20T10:00:00"
+    },
+    "cliente": {
+        "id": "cli_carlos",
+        "nombre": "Carlos Gomez",
+        "identificacion": "1001",
+        "direccion": "Av. Siempre Viva 742",
+        "telefono": "555-9876",
+        "estado": "ACTIVO"
+    },
+    "movimientos": [
+        {
+            "id": 1,
+            "fecha": "2024-05-20T10:30:00",
+            "tipoMovimiento": "DEPOSITO",
+            "valor": 100.00,
+            "saldo": 600.00
+        }
+    ]
+}
+```
+
+### Respuesta de Error (Formato General)
+```json
+{
+    "error": "Tipo de Error",
+    "mensaje": "Descripción detallada del error"
+}
+```
+
+---
+
+## Manejo de Errores
+
+[... contenido existente sobre manejo de errores ...]
+
+## Validaciones
+
+[... contenido existente sobre validaciones ...]
+
+## Compilación y Ejecución
+
+[... contenido existente sobre compilación y ejecución ...]
+
+## Notas Importantes
+
+[... contenido existente sobre notas importantes ...]
+
+## Contribución
+
+[... contenido existente sobre contribución ...]
+
+## Licencia
+
+[... contenido existente sobre licencia ...]
 
